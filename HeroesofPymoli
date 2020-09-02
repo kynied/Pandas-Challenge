@@ -1,1 +1,219 @@
 
+In [1]:
+
+import pandas as pd
+import csv
+
+csv_file = r"C:\Users\skm72\Desktop\git\Homework\pandas-challenge\HeroesOfPymoli\Resources\purchase_data.csv"
+game_df=pd.read_csv(csv_file)
+game_df.head()
+
+Out[1]:
+	Purchase ID 	SN 	Age 	Gender 	Item ID 	Item Name 	Price
+0 	0 	Lisim78 	20 	Male 	108 	Extraction, Quickblade Of Trembling Hands 	3.53
+1 	1 	Lisovynya38 	40 	Male 	143 	Frenzied Scimitar 	1.56
+2 	2 	Ithergue48 	24 	Male 	92 	Final Critic 	4.88
+3 	3 	Chamassasya86 	24 	Male 	100 	Blindscythe 	3.27
+4 	4 	Iskosia90 	23 	Male 	131 	Fury 	1.44
+In [2]:
+
+#Finding the total unique "SN"
+total_players = len(game_df["SN"].value_counts())
+total_players_df = pd.DataFrame([{"Total Players" : total_players}])
+total_players_df
+
+Out[2]:
+	Total Players
+0 	576
+In [3]:
+
+#Finding the amount of unique items the average price and total amount of purchases and revenue
+unique_items = len(game_df["Item Name"].unique())
+average_price = game_df["Price"].mean()
+total_purchases = game_df["Purchase ID"].count()
+total_revenue = game_df["Price"].sum()
+
+#Creating a dataframe for the values
+purchasing_analysis_total = pd.DataFrame([{"Number of Unique Items" : unique_items,
+                                           "Average Price" : average_price,
+                                           "Number of Purchases" : total_purchases,
+                                           "Total Revenue" : total_revenue}])
+
+#Formatting the average price and total revenue to look cleaner
+purchasing_analysis_total["Average Price"] = purchasing_analysis_total["Average Price"].map("${:,.2f}".format)
+purchasing_analysis_total["Total Revenue"] = purchasing_analysis_total["Total Revenue"].map("${:,.2f}".format)
+purchasing_analysis_total
+
+Out[3]:
+	Number of Unique Items 	Average Price 	Number of Purchases 	Total Revenue
+0 	179 	$3.05</td> <td>780</td> <td>$2,379.77
+In [4]:
+
+#Finding the gender counts based on the unique "SN"
+gender_types = game_df.groupby("Gender")
+total_gender_counts = gender_types.nunique()["SN"]
+gender_percentage = (total_gender_counts / total_players) * 100
+
+#Creating a dataframe for the values
+gender_types_df = pd.DataFrame({"Percentage of Players" : gender_percentage,
+                                 "Total Count" : total_gender_counts})
+
+#Formatting the dataframe to make it look cleaner
+gender_types_df.index.name = None
+gender_types_df = gender_types_df.sort_values(["Total Count"], ascending = False)
+gender_types_df["Percentage of Players"] = gender_types_df["Percentage of Players"].map("{:,.2f}%".format)
+gender_types_df
+
+Out[4]:
+	Percentage of Players 	Total Count
+Male 	84.03% 	484
+Female 	14.06% 	81
+Other / Non-Disclosed 	1.91% 	11
+In [5]:
+
+#Finding the average of purchase based on the gender
+gender_count = gender_types["Purchase ID"].count()
+average_purchase_gender = gender_types["Price"].mean()
+average_total_gender = gender_types["Price"].sum()
+average_person = average_total_gender/total_gender_counts
+
+#Creating a dataframe for the values
+purchasing_analysis_gender = pd.DataFrame({"Purchase Count" : gender_count,
+                                           "Average Purchase Price" : average_purchase_gender,
+                                           "Average Purchase Value" : average_total_gender,
+                                           "Avg Total Purchase per Person" : average_person})
+
+#Formatting the dataframe to make it look cleaner
+purchasing_analysis_gender.index.name = "Gender"
+purchasing_analysis_gender["Average Purchase Price"] = purchasing_analysis_gender["Average Purchase Price"].map("${:,.2f}".format)
+purchasing_analysis_gender["Average Purchase Value"] = purchasing_analysis_gender["Average Purchase Value"].map("${:,.2f}".format)
+purchasing_analysis_gender["Avg Total Purchase per Person"] = purchasing_analysis_gender["Avg Total Purchase per Person"].map("${:,.2f}".format)
+purchasing_analysis_gender
+
+Out[5]:
+	Purchase Count 	Average Purchase Price 	Average Purchase Value 	Avg Total Purchase per Person
+Gender 				
+Female 	113 	$3.20 	$361.94</td> <td>$4.47
+Male 	652 	$3.02</td> <td>$1,967.64 	$4.07</td> </tr> <tr> <th>Other / Non-Disclosed</th> <td>15</td> <td>$3.35 	$50.19</td> <td>$4.56
+In [6]:
+
+#Creating the bins and the group names
+bins = [0, 9.9, 14.9, 19.9, 24.9, 29.9, 34.9, 39.9, 150]
+group_names = ["<10", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40+"]
+
+#Putting the data into their bins based on age
+game_df["Age Group"] = pd.cut(game_df["Age"], bins, labels = group_names, include_lowest = True)
+
+#Finding the total number in each age group based on the unique "SN"
+age_group = game_df.groupby(["Age Group"])
+age_count = age_group["SN"].nunique()
+age_percentage = (age_count/total_players) * 100
+
+#Creating a dataframe for the values
+age_group_df = pd.DataFrame({"Total Count": age_count, "Percentage of Players": age_percentage})
+
+#Formating the dataframe to make it look cleaner
+age_group_df.index.name = None
+age_group_df["Percentage of Players"] = age_group_df["Percentage of Players"].map("{:,.2f}%".format)
+age_group_df
+
+Out[6]:
+	Total Count 	Percentage of Players
+<10 	17 	2.95%
+10-14 	22 	3.82%
+15-19 	107 	18.58%
+20-24 	258 	44.79%
+25-29 	77 	13.37%
+30-34 	52 	9.03%
+35-39 	31 	5.38%
+40+ 	12 	2.08%
+In [7]:
+
+#Finding the average of purchase based on the age
+age_count_total = age_group["Purchase ID"].count()
+average_purchase_age = age_group["Price"].mean()
+average_total_age = age_group["Price"].sum()
+average_age = average_total_age/age_count
+
+#Creating a dataframe for the values
+purchasing_analysis_age = pd.DataFrame({"Purchase Count" : age_count_total,
+                                        "Average Purchase Price" : average_purchase_age,
+                                        "Average Purchase Value" : average_total_age,
+                                        "Avg Total Purchase per Person" : average_age})
+
+#Formatting the dataframe to make it look cleaner
+purchasing_analysis_age.index.name = "Age Range"
+purchasing_analysis_age["Average Purchase Price"] = purchasing_analysis_age["Average Purchase Price"].map("${:,.2f}".format)
+purchasing_analysis_age["Average Purchase Value"] = purchasing_analysis_age["Average Purchase Value"].map("${:,.2f}".format)
+purchasing_analysis_age["Avg Total Purchase per Person"] = purchasing_analysis_age["Avg Total Purchase per Person"].map("${:,.2f}".format)
+purchasing_analysis_age
+
+Out[7]:
+	Purchase Count 	Average Purchase Price 	Average Purchase Value 	Avg Total Purchase per Person
+Age Range 				
+<10 	23 	$3.35 	$77.13</td> <td>$4.54
+10-14 	28 	$2.96</td> <td>$82.78 	$3.76</td> </tr> <tr> <th>15-19</th> <td>136</td> <td>$3.04 	$412.89</td> <td>$3.86
+20-24 	365 	$3.05</td> <td>$1,114.06 	$4.32</td> </tr> <tr> <th>25-29</th> <td>101</td> <td>$2.90 	$293.00</td> <td>$3.81
+30-34 	73 	$2.93</td> <td>$214.00 	$4.12</td> </tr> <tr> <th>35-39</th> <td>41</td> <td>$3.60 	$147.67</td> <td>$4.76
+40+ 	13 	$2.94</td> <td>$38.24 	$3.19
+In [8]:
+
+#Finding the average of purchase based on the "SN"
+spender = game_df.groupby("SN")
+spender_purchase_count = spender["Purchase ID"].count()
+spender_avg = spender["Price"].mean()
+spender_total = spender["Price"].sum()
+
+#Creating a dataframe for the values
+top_spenders = pd.DataFrame({"Purchase Count" : spender_purchase_count,
+                             "Average Purchase Price" : spender_avg,
+                             "Total Purchase Value" : spender_total})
+
+#Formatting the dataframe to make it look cleaner and putting the "Total Purchasing Value" in descending order
+top_spenders = top_spenders.sort_values(["Total Purchase Value"], ascending = False)
+top_spenders.index.name = "SN"
+top_spenders["Average Purchase Price"] = top_spenders["Average Purchase Price"].map("${:,.2f}".format)
+top_spenders["Total Purchase Value"] = top_spenders["Total Purchase Value"].map("${:,.2f}".format)
+top_spenders.head()
+
+Out[8]:
+	Purchase Count 	Average Purchase Price 	Total Purchase Value
+SN 			
+Lisosia93 	5 	$3.79 	$18.96</td> </tr> <tr> <th>Idastidru52</th> <td>4</td> <td>$3.86 	$15.45</td> </tr> <tr> <th>Chamjask73</th> <td>3</td> <td>$4.61 	$13.83</td> </tr> <tr> <th>Iral74</th> <td>4</td> <td>$3.40 	$13.62</td> </tr> <tr> <th>Iskadarya95</th> <td>3</td> <td>$4.37 	$13.10
+In [9]:
+
+items = game_df[["Item ID", "Item Name", "Price"]]
+item_stats = items.groupby(["Item ID","Item Name"])
+item_count = item_stats["Price"].count()
+item_total = item_stats["Price"].sum()
+item_price = item_total/item_count
+
+#Creating a dataframe for the values
+top_items = pd.DataFrame({"Purchase Count" : item_count,
+                          "Item Price" : item_price,
+                          "Total Purchase Value" : item_total})
+
+#Formatting the dataframe to make it look cleaner and putting the "Total Purchasing Value" in descending order
+top_purchase = top_items.sort_values(["Purchase Count"], ascending = False)
+top_purchase.index.name = "Item ID", "Item Name"
+top_purchase["Item Price"] = top_purchase["Item Price"].map("${:,.2f}".format)
+top_purchase["Total Purchase Value"] = top_purchase["Total Purchase Value"].map("${:,.2f}".format)
+top_purchase.head()
+
+Out[9]:
+		Purchase Count 	Item Price 	Total Purchase Value
+Item ID 	Item Name 			
+92 	Final Critic 	13 	$4.61 	$59.99</td> </tr> <tr> <th>178</th> <th>Oathbreaker, Last Hope of the Breaking Storm</th> <td>12</td> <td>$4.23 	$50.76</td> </tr> <tr> <th>145</th> <th>Fiery Glass Crusader</th> <td>9</td> <td>$4.58 	$41.22</td> </tr> <tr> <th>132</th> <th>Persuasion</th> <td>9</td> <td>$3.22 	$28.99</td> </tr> <tr> <th>108</th> <th>Extraction, Quickblade Of Trembling Hands</th> <td>9</td> <td>$3.53 	$31.77
+In [10]:
+
+most_profit = top_items.sort_values(["Total Purchase Value"], ascending = False)
+most_profit.index.name = "Item ID", "Item Name"
+most_profit["Item Price"] = most_profit["Item Price"].map("${:,.2f}".format)
+most_profit["Total Purchase Value"] = most_profit["Total Purchase Value"].map("${:,.2f}".format)
+most_profit.head()
+
+Out[10]:
+		Purchase Count 	Item Price 	Total Purchase Value
+Item ID 	Item Name 			
+92 	Final Critic 	13 	$4.61 	$59.99</td> </tr> <tr> <th>178</th> <th>Oathbreaker, Last Hope of the Breaking Storm</th> <td>12</td> <td>$4.23 	$50.76</td> </tr> <tr> <th>82</th> <th>Nirvana</th> <td>9</td> <td>$4.90 	$44.10</td> </tr> <tr> <th>145</th> <th>Fiery Glass Crusader</th> <td>9</td> <td>$4.58 	$41.22</td> </tr> <tr> <th>103</th> <th>Singed Scalpel</th> <td>8</td> <td>$4.35 	$34.80
+In [ ]:
